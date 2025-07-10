@@ -1119,9 +1119,18 @@ module.exports = class {
       if (!this.items[code] || !user.items[code]) return api.sendMessage("❌ Bạn không có vật phẩm này.", threadID, messageID);
       user.items[code]--;
       
-      if (code === "danexp") user.exp += 1000;
-      if (code === "thechat") user.theChat += Math.floor(Math.random() * 11) + 10;
-      if (code === "petbox") {
+      let msg = "";
+      
+      if (code === "danexp") {
+        user.exp += 1000;
+        msg = `💊 Đã sử dụng Đan EXP!\n✨ Nhận được: +1,000 EXP\n📊 EXP hiện tại: ${user.exp}`;
+      }
+      else if (code === "thechat") {
+        const gain = Math.floor(Math.random() * 11) + 10;
+        user.theChat += gain;
+        msg = `💼 Đã sử dụng Gói Thể Chất!\n💪 Nhận được: +${gain} Thể Chất\n💪 Thể chất hiện tại: ${user.theChat}`;
+      }
+      else if (code === "petbox") {
         const petResult = this.getRandomPet();
         user.petInventory = user.petInventory || [];
         user.petInventory.push(petResult.pet);
@@ -1130,22 +1139,35 @@ module.exports = class {
         const gainedTitles = updateTitles();
         
         const petId = this.getPetId(petResult.pet);
-        let msg = `🎁 Đã mở Rương Pet!\n🐾 Pet ID: ${petId}\n⭐ Độ hiếm: ${petResult.rarityName}`;
+        msg = `🎁 Đã mở Rương Pet!\n🐾 Pet ID: ${petId}\n⭐ Độ hiếm: ${petResult.rarityName}`;
         if (gainedTitles.length > 0) {
           msg += `\n🎉 Danh hiệu mới: ${gainedTitles.join(", ")}`;
         }
-        
-        return api.sendMessage(msg, threadID, messageID);
       }
-      if (code === "clanbuff" && user.clan) {
+      else if (code === "clanbuff" && user.clan) {
         const clan = clanData[user.clan];
         clan.buffExpire = Date.now() + 3600000; // 1 hour
         this.saveClanData(clanData);
-        return api.sendMessage("⚡ Đã kích hoạt buff EXP cho clan trong 1 giờ!", threadID, messageID);
+        msg = `⚡ Đã kích hoạt Buff Clan!\n🏯 Tăng EXP cho toàn clan trong 1 giờ\n⏰ Hết hạn: 1 giờ nữa`;
+      }
+      else if (code === "ngoc") {
+        msg = `💠 Đã sử dụng Ngọc May Mắn!\n🎯 Tăng tỉ lệ độ kiếp +20% cho lần tiếp theo`;
+      }
+      else if (code === "danphuc") {
+        msg = `🧪 Đã sử dụng Đan Hồi Phục!\n🛡️ Bảo vệ khi độ kiếp thất bại`;
+      }
+      else if (code === "clanstone") {
+        msg = `🏗️ Đã sử dụng Đá Xây Dựng!\n🏯 Dùng để nâng cấp công trình clan`;
+      }
+      else if (code === "clantoken") {
+        msg = `🎖️ Đã sử dụng Token Clan!\n🏯 Dùng để tham gia event clan`;
+      }
+      else {
+        msg = `🎯 Đã sử dụng ${this.items[code].name}`;
       }
       
       this.saveAllData(data);
-      return api.sendMessage(`🎯 Đã dùng ${this.items[code].name}`, threadID, messageID);
+      return api.sendMessage(msg, threadID, messageID);
     }
 
     if (cmd === "inv") {
