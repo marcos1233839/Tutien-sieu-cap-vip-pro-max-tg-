@@ -417,7 +417,7 @@ module.exports = class {
         `🏯 Bang hội: clan | cjoin | cleave | cinfo | cupgrade\n` +
         `🛍️ Vật phẩm: shop | buy <mã> | use <mã> | inv\n` +
         `⚙️ Hệ thống: top | clantop | hide | pet | title | rebirth\n` +
-        `☯️ Phái: tien | ma | phat | hachan | kiem`;
+        `☯️ Phái: phai <tên phái>`;
       return api.sendMessage(msg, threadID, messageID);
     }
 
@@ -1015,15 +1015,78 @@ module.exports = class {
       }
     }
 
-    // Faction selection (preserved)
+    // Enhanced faction system
     if (cmd === "phai") {
-      if (user.faction) return api.sendMessage("☯️ Bạn đã chọn phái, không thể thay đổi.", threadID, messageID);
+      if (user.faction) {
+        return api.sendMessage(`☯️ Bạn đã gia nhập ${this.factions[user.faction]}\n❌ Không thể thay đổi phái sau khi đã chọn.`, threadID, messageID);
+      }
+      
       const pick = args[1]?.toLowerCase();
-      if (!["tien", "ma", "phat", "hachan", "kiem"].includes(pick))
-        return api.sendMessage("☯️ Dùng: phai tien | ma | phat | hachan | kiem", threadID, messageID);
+      
+      if (!pick) {
+        // Show all factions with their properties
+        let msg = `☯️ 𝗛Ệ 𝗧𝗛Ố𝗡𝗚 𝗣𝗛Á𝗜 𝗧𝗨 𝗧𝗜Ê𝗡\n━━━━━━━━━━━━━━━━\n`;
+        msg += `📋 Dùng: phai <tên phái>\n\n`;
+        
+        const factionInfo = {
+          tien: {
+            name: "🧘 Tu Tiên",
+            desc: "Tu luyện theo đường lối chính đạo, tâm tính ôn hòa",
+            bonus: "Tăng tỉ lệ thành công độ kiếp +10%",
+            color: "🟢"
+          },
+          ma: {
+            name: "😈 Tu Ma", 
+            desc: "Tu luyện theo đường lối tà đạo, sức mạnh hủy diệt",
+            bonus: "Tăng tỉ lệ thành công độ kiếp +10%",
+            color: "🔴"
+          },
+          phat: {
+            name: "🪷 Tu Phật",
+            desc: "Tu luyện theo đường lối từ bi, tâm hồn thanh tịnh",
+            bonus: "Tăng thể chất hồi phục +20%",
+            color: "🟡"
+          },
+          hachan: {
+            name: "❄️ Hắc Hàn",
+            desc: "Tu luyện theo đường lối băng hàn, sức mạnh lạnh lẽo",
+            bonus: "Tăng EXP khi thể chất > 100",
+            color: "🔵"
+          },
+          kiem: {
+            name: "⚔️ Kiếm Tông",
+            desc: "Tu luyện theo đường lối kiếm đạo, sát khí mạnh mẽ",
+            bonus: "Tăng sát thương PvP +15%",
+            color: "⚪"
+          }
+        };
+        
+        for (const [key, info] of Object.entries(factionInfo)) {
+          msg += `${info.color} **${info.name}**\n`;
+          msg += `   ${info.desc}\n`;
+          msg += `   💫 ${info.bonus}\n`;
+          msg += `   📝 Lệnh: phai ${key}\n\n`;
+        }
+        
+        return api.sendMessage(msg, threadID, messageID);
+      }
+      
+      if (!["tien", "ma", "phat", "hachan", "kiem"].includes(pick)) {
+        return api.sendMessage("❌ Tên phái không hợp lệ!\n📋 Dùng: phai (không có tham số) để xem danh sách phái", threadID, messageID);
+      }
+      
       user.faction = pick;
       this.saveAllData(data);
-      return api.sendMessage(`☯️ Bạn đã gia nhập ${this.factions[pick]}`, threadID, messageID);
+      
+      const factionNames = {
+        tien: "🧘 Tu Tiên",
+        ma: "😈 Tu Ma", 
+        phat: "🪷 Tu Phật",
+        hachan: "❄️ Hắc Hàn",
+        kiem: "⚔️ Kiếm Tông"
+      };
+      
+      return api.sendMessage(`☯️ Chúc mừng! Bạn đã gia nhập ${factionNames[pick]}!\n🎯 Hãy tu luyện để phát huy sức mạnh của phái!`, threadID, messageID);
     }
 
     // Enhanced shop with clan items
