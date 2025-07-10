@@ -15,7 +15,7 @@ module.exports = class {
     hasPrefix: true
   };
 
-  static realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần", "Luyện Hư", "Độ Kiếp", "Đại Thừa", "Phi Thăng"];
+  static realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần", "Luyện Hư", "Độ Kiếp", "Đại Thừa", "Phi Thăng", "Thiên Tiên", "Thánh Nhân", "Đế Quân", "Thần Vương", "Tạo Hóa"];
   static dataPath = path.join(__dirname, "..", "..", "system", "data", "tutien.json");
   static bossPath = path.join(__dirname, "..", "..", "system", "data", "boss.json");
   static clanPath = path.join(__dirname, "..", "..", "system", "data", "clans.json");
@@ -24,7 +24,8 @@ module.exports = class {
     tien: "🧘 Tu Tiên",
     ma: "😈 Tu Ma",
     phat: "🪷 Tu Phật",
-    hachan: "❄️ Hắc Hàn"
+    hachan: "❄️ Hắc Hàn",
+    kiem: "⚔️ Kiếm Tông"
   };
 
   static clanRoles = {
@@ -69,19 +70,19 @@ module.exports = class {
 
   static petList = {
     common: [
-      "⚪ 🐶 Chó Nhỏ", "⚪ 🐱 Mèo Mun", "⚪ 🦊 Cáo", "⚪ 🐰 Thỏ", "⚪ 🐦 Chim Sẻ"
+      "🐶 Chó Nhỏ", "🐱 Mèo Mun", "🦊 Cáo", "🐰 Thỏ", "🐦 Chim Sẻ"
     ],
     uncommon: [
-      "🟢 🐯 Hổ Nhỏ", "🟢 🐵 Khỉ Thông Minh", "🟢 🦅 Ưng Lửa", "🟢 🐍 Xà Tinh", "🟢 🐺 Sói Trắng"
+      " Hổ Nhỏ", " Khỉ Thông Minh", "🦅 Ưng Lửa", "🐍 Xà Tinh", "🐺 Sói Trắng"
     ],
     rare: [
-      "🔵 🐲 Rồng Con", "🔵 🦄 Kỳ Lân", "🔵 🦖 Khủng Long", "🔵 👻 Bóng Ma", "🔵 🦂 Bọ Cạp Lửa"
+      "🐲 Rồng Con", "🦄 Kỳ Lân", "🦖 Khủng Long", "👻 Bóng Ma", "🦂 Bọ Cạp Lửa"
     ],
     epic: [
-      "🟣 🐺 Sói Băng", "🟣 🐉 Long Linh", "🟣 🧚 Tiên Linh", "🟣 💀 Lich", "🟣 🔥 Phượng Hoàng"
+      "🐺 Sói Băng", "🐉 Long Linh", "🧚 Tiên Linh", "💀 Lich", " Phượng Hoàng"
     ],
     legendary: [
-      "🟡 🌪️ Rồng Gió", "🟡 ⚡ Rồng Sấm", "🟡 🌌 Rồng Vũ Trụ", "🟡 🌟 Thần Long", "🟡 👑 Hoàng Gia Kỳ Lân"
+      "🌪️ Rồng Gió", "⚡ Rồng Sấm", "🌌 Rồng Vũ Trụ", "🌟 Thần Long", "👑 Hoàng Gia Kỳ Lân"
     ]
   };
 
@@ -163,6 +164,22 @@ module.exports = class {
       }
     }
     return 1;
+  }
+
+  static getPetId(petName) {
+    for (const [rarity, pets] of Object.entries(this.petList)) {
+      const index = pets.indexOf(petName);
+      if (index !== -1) {
+        return `${rarity.charAt(0).toUpperCase()}${index + 1}`;
+      }
+    }
+    return "UNK";
+  }
+
+  static createProgressBar(percent) {
+    const filled = Math.floor(percent / 10);
+    const empty = 10 - filled;
+    return "█".repeat(filled) + "░".repeat(empty);
   }
 
   // Title helper functions
@@ -399,7 +416,8 @@ module.exports = class {
         `🎮 Khác: pvp <@tag> | boss | phai | artifact | event\n` +
         `🏯 Bang hội: clan | cjoin | cleave | cinfo | cupgrade\n` +
         `🛍️ Vật phẩm: shop | buy <mã> | use <mã> | inv\n` +
-        `⚙️ Hệ thống: top | clantop | hide | pet | title | rebirth`;
+        `⚙️ Hệ thống: top | clantop | hide | pet | title | rebirth\n` +
+        `☯️ Phái: tien | ma | phat | hachan | kiem`;
       return api.sendMessage(msg, threadID, messageID);
     }
 
@@ -441,10 +459,23 @@ module.exports = class {
       user.lastTrain = now;
       user.lastClanActivity = now;
 
-      // Daily quest progress
-      if (user.dailyQuest?.type === "train" && user.dailyQuest.date === new Date().toDateString()) {
-        user.dailyQuest.progress++;
-      }
+              // Quest progress tracking
+        if (user.quests?.date === new Date().toDateString()) {
+          user.quests.list.forEach(quest => {
+            if (quest.type === "train" && !quest.completed) {
+              quest.progress++;
+              if (quest.progress >= quest.target) {
+                quest.completed = true;
+              }
+            }
+            if (quest.type === "clan" && !quest.completed && user.clan) {
+              quest.progress++;
+              if (quest.progress >= quest.target) {
+                quest.completed = true;
+              }
+            }
+          });
+        }
 
       // Check for new titles
       const gainedTitles = updateTitles();
@@ -508,6 +539,18 @@ module.exports = class {
         user.exp -= reqExp;
         user.dokiepCount++;
         user.linhThach += 2;
+        
+        // Quest progress tracking
+        if (user.quests?.date === new Date().toDateString()) {
+          user.quests.list.forEach(quest => {
+            if (quest.type === "dokiep" && !quest.completed) {
+              quest.progress++;
+              if (quest.progress >= quest.target) {
+                quest.completed = true;
+              }
+            }
+          });
+        }
         
         // Clan contribution
         if (user.clan) {
@@ -948,8 +991,8 @@ module.exports = class {
     if (cmd === "phai") {
       if (user.faction) return api.sendMessage("☯️ Bạn đã chọn phái, không thể thay đổi.", threadID, messageID);
       const pick = args[1]?.toLowerCase();
-      if (!["tien", "ma", "phat", "hachan"].includes(pick))
-        return api.sendMessage("☯️ Dùng: phai tien | ma | phat | hachan", threadID, messageID);
+      if (!["tien", "ma", "phat", "hachan", "kiem"].includes(pick))
+        return api.sendMessage("☯️ Dùng: phai tien | ma | phat | hachan | kiem", threadID, messageID);
       user.faction = pick;
       this.saveAllData(data);
       return api.sendMessage(`☯️ Bạn đã gia nhập ${this.factions[pick]}`, threadID, messageID);
@@ -990,7 +1033,8 @@ module.exports = class {
         // Check for new titles after getting pet
         const gainedTitles = updateTitles();
         
-        let msg = `🎁 Đã mở ${this.items[code].name}!\n🐾 Bạn nhận được: ${petResult.pet}\n⭐ Độ hiếm: ${petResult.rarityName}`;
+        const petId = this.getPetId(petResult.pet);
+        let msg = `🎁 Đã mở Rương Pet!\n🐾 Pet ID: ${petId}\n⭐ Độ hiếm: ${petResult.rarityName}`;
         if (gainedTitles.length > 0) {
           msg += `\n🎉 Danh hiệu mới: ${gainedTitles.join(", ")}`;
         }
@@ -1025,7 +1069,7 @@ module.exports = class {
       const sub = args[1];
       if (!sub) {
         if (!user.petEquipped) {
-          return api.sendMessage("🐾 Bạn chưa có pet, hãy dùng `use petbox` để mở!\n📋 Dùng: pet inv | pet equip <tên> | pet info", threadID, messageID);
+          return api.sendMessage("🐾 Bạn chưa có pet, hãy dùng `use petbox` để mở!\n📋 Dùng: pet inv | pet equip <ID> | pet info", threadID, messageID);
         }
         
         // Get pet rarity
@@ -1037,7 +1081,7 @@ module.exports = class {
           }
         }
         
-        return api.sendMessage(`🐾 Pet hiện tại: ${user.petEquipped}${rarityInfo}\n📋 Dùng: pet inv | pet equip <tên> | pet info`, threadID, messageID);
+        return api.sendMessage(`🐾 Pet hiện tại: ${user.petEquipped}${rarityInfo}\n📋 Dùng: pet inv | pet equip <ID> | pet info`, threadID, messageID);
       }
       if (sub === "inv") {
         if (!user.petInventory || user.petInventory.length === 0)
@@ -1045,26 +1089,42 @@ module.exports = class {
         
         let msg = "🎒 𝗣𝗘𝗧 𝗧𝗥𝗢𝗡𝗚 𝗞𝗛𝗢\n━━━━━━━━━━━━\n";
         user.petInventory.forEach((pet, i) => {
-          // Get rarity info
+          // Get rarity info and pet ID
           let rarityInfo = "";
+          const petId = this.getPetId(pet);
           for (const [rarity, pets] of Object.entries(this.petList)) {
             if (pets.includes(pet)) {
               rarityInfo = ` (${this.petRarity[rarity].name})`;
               break;
             }
           }
-          msg += `${i + 1}. ${pet}${rarityInfo}\n`;
+          msg += `${i + 1}. ${petId} - ${pet}${rarityInfo}\n`;
         });
         return api.sendMessage(msg, threadID, messageID);
       }
       if (sub === "equip") {
         const name = args.slice(2).join(" ");
-        if (!name) return api.sendMessage("❌ Dùng: pet equip <tên pet>", threadID, messageID);
-        if (!user.petInventory.includes(name))
-          return api.sendMessage("❌ Bạn không sở hữu pet này.", threadID, messageID);
-        user.petEquipped = name;
+        if (!name) return api.sendMessage("❌ Dùng: pet equip <ID pet>", threadID, messageID);
+        
+        // Check if input is a pet ID
+        let targetPet = null;
+        if (name.length <= 3) { // Likely a pet ID
+          for (const pet of user.petInventory) {
+            if (this.getPetId(pet) === name.toUpperCase()) {
+              targetPet = pet;
+              break;
+            }
+          }
+        } else { // Likely a pet name
+          if (user.petInventory.includes(name)) {
+            targetPet = name;
+          }
+        }
+        
+        if (!targetPet) return api.sendMessage("❌ Bạn không sở hữu pet này.", threadID, messageID);
+        user.petEquipped = targetPet;
         this.saveAllData(data);
-        return api.sendMessage(`✅ Đã trang bị pet: ${name}`, threadID, messageID);
+        return api.sendMessage(`✅ Đã trang bị pet: ${targetPet}`, threadID, messageID);
       }
       if (sub === "info") {
         if (!user.petEquipped) return api.sendMessage("🐾 Bạn chưa trang bị pet nào.", threadID, messageID);
@@ -1239,6 +1299,18 @@ module.exports = class {
         target.exp += expGain;
       }
 
+      // Quest progress tracking
+      if (user.quests?.date === new Date().toDateString()) {
+        user.quests.list.forEach(quest => {
+          if (quest.type === "pvp" && !quest.completed) {
+            quest.progress++;
+            if (quest.progress >= quest.target) {
+              quest.completed = true;
+            }
+          }
+        });
+      }
+
       // Check for new titles
       const gainedTitles = updateTitles();
       if (gainedTitles.length > 0) {
@@ -1250,29 +1322,69 @@ module.exports = class {
       return api.sendMessage(resultMsg, threadID, messageID);
     }
 
-    // Enhanced quest system
+    // Enhanced quest system with 24h cooldown and multiple quests
     if (cmd === "quest") {
-      const today = new Date().toDateString();
-      if (!user.dailyQuest || user.dailyQuest.date !== today) {
-        const types = ["train", "dokiep", "boss", "clan"];
-        const rand = types[Math.floor(Math.random() * types.length)];
-        const target = rand === "boss" ? 1 : (rand === "clan" ? 5 : 3);
-        user.dailyQuest = { type: rand, progress: 0, target, date: today };
+      const now = Date.now();
+      const cooldown = 86400000; // 24 hours
+      
+      if (!user.quests || user.quests.date !== new Date().toDateString()) {
+        // Generate 1-3 random quests
+        const questCount = Math.floor(Math.random() * 3) + 1;
+        const questTypes = [
+          { type: "train", name: "Tu Luyện", target: 5, reward: { exp: 300, lt: 2 } },
+          { type: "dokiep", name: "Độ Kiếp", target: 2, reward: { exp: 500, lt: 3 } },
+          { type: "boss", name: "Đánh Boss", target: 1, reward: { exp: 800, lt: 5 } },
+          { type: "clan", name: "Hoạt Động Clan", target: 3, reward: { exp: 400, lt: 4 } },
+          { type: "dungeon", name: "Vào Dungeon", target: 1, reward: { exp: 600, lt: 3 } },
+          { type: "pvp", name: "PvP", target: 2, reward: { exp: 700, lt: 4 } }
+        ];
+        
+        const selectedQuests = [];
+        const shuffled = questTypes.sort(() => 0.5 - Math.random());
+        
+        for (let i = 0; i < questCount; i++) {
+          selectedQuests.push(shuffled[i]);
+        }
+        
+        user.quests = {
+          date: new Date().toDateString(),
+          list: selectedQuests.map(q => ({ ...q, progress: 0, completed: false }))
+        };
       }
 
-      const q = user.dailyQuest;
-      q.progress = q.progress || 0;
-      q.target = q.target || 1;
-      const done = q.progress >= q.target;
-      const percent = Math.floor((q.progress / q.target) * 100);
-
-      let msg = `🎯 Nhiệm vụ hôm nay: ${q.type.toUpperCase()}\nTiến độ: ${q.progress}/${q.target} (${percent}%)`;
-      if (done) {
-        const reward = q.type === "clan" ? 5 : 2;
-        user.linhThach += reward;
-        user.exp += 500;
-        msg += `\n✅ Đã hoàn thành! +500 EXP +${reward} LT`;
-        delete user.dailyQuest;
+      const quests = user.quests.list;
+      let msg = `🎯 𝗡𝗛𝗜Ệ𝗠 𝗩Ụ 𝗛Ô𝗠 𝗡𝗔𝗬\n━━━━━━━━━━━━━━━━\n`;
+      
+      let allCompleted = true;
+      quests.forEach((quest, index) => {
+        const percent = Math.floor((quest.progress / quest.target) * 100);
+        const status = quest.completed ? "✅" : "⏳";
+        const progressBar = this.createProgressBar(percent);
+        
+        msg += `${index + 1}. ${status} ${quest.name}\n`;
+        msg += `   ${progressBar} ${quest.progress}/${quest.target}\n`;
+        msg += `   💰 Thưởng: +${quest.reward.exp} EXP +${quest.reward.lt} LT\n\n`;
+        
+        if (!quest.completed) allCompleted = false;
+      });
+      
+      if (allCompleted) {
+        let totalExp = 0;
+        let totalLt = 0;
+        quests.forEach(quest => {
+          totalExp += quest.reward.exp;
+          totalLt += quest.reward.lt;
+        });
+        
+        user.exp += totalExp;
+        user.linhThach += totalLt;
+        
+        msg += `🎉 𝗛𝗢À𝗡 𝗧𝗛À𝗡𝗛 𝗧Ấ𝗧 𝗖Ả 𝗡𝗛Ệ𝗠 𝗩Ụ!\n`;
+        msg += `✨ Nhận được: +${totalExp} EXP +${totalLt} LT`;
+        
+        delete user.quests;
+      } else {
+        msg += `⏰ Nhiệm vụ mới sau 24h`;
       }
 
       this.saveAllData(data);
@@ -1325,6 +1437,19 @@ module.exports = class {
         
         user.exp += reward;
         user.linhThach += ltReward;
+        
+        // Quest progress tracking
+        if (user.quests?.date === new Date().toDateString()) {
+          user.quests.list.forEach(quest => {
+            if (quest.type === "dungeon" && !quest.completed) {
+              quest.progress++;
+              if (quest.progress >= quest.target) {
+                quest.completed = true;
+              }
+            }
+          });
+        }
+        
         msg += `\n✅ Thành công! Nhận ${reward} EXP + ${ltReward} LT.`;
         if (user.petEquipped) msg += `\n🐾 Pet bonus được áp dụng!`;
       } else {
@@ -1401,6 +1526,18 @@ module.exports = class {
       boss.hp -= dmg;
       boss.damage[senderID] = (boss.damage[senderID] || 0) + dmg;
       user.bossDamage += dmg;
+
+      // Quest progress tracking
+      if (user.quests?.date === new Date().toDateString()) {
+        user.quests.list.forEach(quest => {
+          if (quest.type === "boss" && !quest.completed) {
+            quest.progress++;
+            if (quest.progress >= quest.target) {
+              quest.completed = true;
+            }
+          }
+        });
+      }
 
       let msg = `🐲 Bạn đánh ${boss.name} gây ${dmg} sát thương!`;
       if (user.petEquipped) msg += ` (🐾 Pet bonus)`;
