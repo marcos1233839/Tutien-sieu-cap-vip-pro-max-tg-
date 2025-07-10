@@ -505,6 +505,9 @@ module.exports = class {
       if (user.exp < reqExp) return api.sendMessage(`⚠️ Cần ${reqExp} EXP để độ kiếp.`, threadID, messageID);
       if (user.theChat < 50) return api.sendMessage("❌ Thể chất không đủ.", threadID, messageID);
       
+      // Send initial message
+      api.sendMessage(`⚡ Bắt đầu độ kiếp đột phá cảnh giới...`, threadID, messageID);
+      
       let rate = 0.6;
       
       // Faction bonus
@@ -577,16 +580,29 @@ module.exports = class {
           return api.sendMessage("🛡️ Được bảo vệ bởi Đan Hồi Phục. Không mất EXP.", threadID, messageID);
         }
         
+        // Generate failure reason
+        const failureReasons = [
+          "Thiên Lôi Nhẹ", "Tâm Ma Quấy Nhiễu", "Khí Huyết Bất Ổn", 
+          "Tâm Thần Phân Tán", "Linh Lực Không Đủ", "Thiên Đạo Phản Đối",
+          "Tâm Ma Xâm Chiếm", "Linh Hồn Bất Ổn", "Thiên Kiếp Nặng"
+        ];
+        const failureReason = failureReasons[Math.floor(Math.random() * failureReasons.length)];
+        
         if (Math.random() < 0.3) {
           user.realm = this.realms[Math.max(0, index - 1)];
           user.theChat -= 10;
           this.saveAllData(data);
-          return api.sendMessage("💥 Tẩu hỏa nhập ma! Bị giảm cảnh giới và thể chất!", threadID, messageID);
+          return api.sendMessage(`💥 Tẩu hỏa nhập ma! Bị giảm cảnh giới và thể chất!`, threadID, messageID);
         }
         
         user.exp -= reqExp;
         this.saveAllData(data);
-        return api.sendMessage("💥 Độ kiếp thất bại!", threadID, messageID);
+        
+        let msg = `💥 Thất bại ở tầng ${index + 1}/${this.realms.length} do *${failureReason}*!\n\n`;
+        msg += `Mất: *${reqExp} EXP*.\n`;
+        msg += `� Thể chất: ${user.theChat}`;
+        
+        return api.sendMessage(msg, threadID, messageID);
       }
     }
 
