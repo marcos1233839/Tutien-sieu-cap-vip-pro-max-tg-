@@ -567,7 +567,19 @@ module.exports = class {
         this.saveAllData(data);
         this.saveClanData(clanData);
         
-        let msg = `🌟 Độ kiếp thành công! Cảnh giới mới: ${next}`;
+        // Generate success reason
+        const successReasons = [
+          "Thiên Đạo Thuận Lợi", "Linh Lực Dồi Dào", "Tâm Thần Tĩnh Lặng",
+          "Khí Huyết Thông Suốt", "Thiên Kiếp Nhẹ Nhàng", "Tâm Ma Bị Trấn Áp",
+          "Linh Hồn Thuần Khiết", "Thiên Lôi Bỏ Qua", "Đạo Tâm Kiên Định"
+        ];
+        const successReason = successReasons[Math.floor(Math.random() * successReasons.length)];
+        
+        let msg = `🌟 Thành công đột phá lên tầng ${index + 2}/${this.realms.length} nhờ *${successReason}*!\n\n`;
+        msg += `✨ Cảnh giới mới: *${next}*\n`;
+        msg += `💰 Nhận được: *+2 Linh Thạch*\n`;
+        msg += `💪 Thể chất: ${user.theChat}`;
+        
         if (gainedTitles.length > 0) {
           msg += `\n🎉 Danh hiệu mới: ${gainedTitles.join(", ")}`;
         }
