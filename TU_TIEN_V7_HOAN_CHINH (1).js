@@ -56,16 +56,16 @@ module.exports = class {
   };
 
   static bossList = [
-    { name: "Thần Long", hp: 50000 },
-    { name: "Thiên Ưng", hp: 52000 },
-    { name: "Bọ Cạp Linh Hồn", hp: 55000 },
-    { name: "Hỏa Kỳ Lân", hp: 58000 },
-    { name: "Băng Tâm Hồ", hp: 60000 },
-    
-    // Clan bosses
-    { name: "Ma Vương Cổ Đại", hp: 100000, type: "clan" },
-    { name: "Rồng Huyết Tộc", hp: 120000, type: "clan" },
-    { name: "Thiên Ma Đế Quân", hp: 150000, type: "clan" }
+    { name: "Thần Long Cổ Đại", hp: 150000 },
+    { name: "Thiên Ưng Hỏa Phượng", hp: 180000 },
+    { name: "Bọ Cạp Linh Hồn", hp: 200000 },
+    { name: "Hỏa Kỳ Lân Thánh Thú", hp: 250000 },
+    { name: "Băng Tâm Hồ Vương", hp: 300000 },
+    { name: "Thiên Ma Đế Quân", hp: 350000 },
+    { name: "Rồng Huyết Tộc", hp: 400000 },
+    { name: "Thiên Thần Sấm Sét", hp: 450000 },
+    { name: "Ma Vương Cổ Đại", hp: 500000 },
+    { name: "Thiên Đế Tối Thượng", hp: 600000 }
   ];
 
   static petList = {
@@ -279,10 +279,13 @@ module.exports = class {
       }
       let boss = JSON.parse(fs.readFileSync(this.bossPath));
       const now = Date.now();
-      if (boss.defeated && now - boss.defeatTime >= 86400000) {
+      
+      // Check if boss is defeated and 2 days have passed
+      if (boss.defeated && now - boss.defeatTime >= (2 * 24 * 60 * 60 * 1000)) {
         boss = this.createNewBoss();
         this.saveBossData(boss);
       }
+      
       return boss;
     } catch (e) {
       console.error("[tutien] Lỗi đọc boss:", e);
@@ -295,10 +298,12 @@ module.exports = class {
     return {
       name: pick.name,
       hp: pick.hp,
+      maxHp: pick.hp,
       damage: {},
       defeated: false,
       defeatTime: 0,
-      type: pick.type || "normal"
+      spawnTime: Date.now(),
+      nextSpawn: Date.now() + (2 * 24 * 60 * 60 * 1000) // 2 days
     };
   }
 
@@ -1598,7 +1603,18 @@ module.exports = class {
     if (cmd === "boss") {
       const boss = this.getBossData();
       if (!boss) return api.sendMessage("⚠️ Lỗi tải boss!", threadID, messageID);
-      if (boss.defeated) return api.sendMessage("🐉 Boss đã bị tiêu diệt! Chờ boss mới...", threadID, messageID);
+      
+      if (boss.defeated) {
+        const timeLeft = boss.nextSpawn - Date.now();
+        const hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
+        const daysLeft = Math.ceil(hoursLeft / 24);
+        
+        if (timeLeft > 0) {
+          return api.sendMessage(`🐉 Boss đã bị tiêu diệt!\n⏰ Boss mới sẽ xuất hiện sau ${daysLeft} ngày ${hoursLeft % 24} giờ.`, threadID, messageID);
+        } else {
+          return api.sendMessage("🐉 Boss đã bị tiêu diệt! Boss mới đang xuất hiện...", threadID, messageID);
+        }
+      }
 
       let dmg = Math.floor(Math.random() * 201) + 100;
       
@@ -1630,9 +1646,10 @@ module.exports = class {
         });
       }
 
+      const percent = Math.floor((boss.hp / boss.maxHp) * 100);
       let msg = `🐲 Bạn đánh ${boss.name} gây ${dmg} sát thương!`;
       if (user.petEquipped) msg += ` (🐾 Pet bonus)`;
-      msg += `\n${boss.name} còn ${Math.max(0, boss.hp)} HP.`;
+      msg += `\n${boss.name} còn ${Math.max(0, boss.hp)}/${boss.maxHp} HP (${percent}%)`;
 
       if (boss.hp <= 0) {
         boss.defeated = true;
@@ -1652,6 +1669,8 @@ module.exports = class {
           const name = data[uid]?.hideInfo ? `Ẩn danh` : (data[uid]?.name || "Ẩn");
           msg += `${i + 1}. ${name} - ${dmg} sát thương\n`;
         });
+        
+        msg += `\n⏰ Boss mới sẽ xuất hiện sau 2 ngày.`;
       }
 
       // Check for new titles after boss damage
