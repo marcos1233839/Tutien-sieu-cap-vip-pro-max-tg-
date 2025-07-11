@@ -510,8 +510,7 @@ module.exports = class {
       if (user.exp < reqExp) return api.sendMessage(`⚠️ Cần ${reqExp} EXP để độ kiếp.`, threadID, messageID);
       if (user.theChat < 50) return api.sendMessage("❌ Thể chất không đủ.", threadID, messageID);
       
-      // Send initial message
-      api.sendMessage(`⚡ Bắt đầu độ kiếp đột phá cảnh giới...`, threadID, messageID);
+
       
       let rate = 0.6;
       
@@ -539,7 +538,7 @@ module.exports = class {
         user.dokiepCount += 2;
         user.linhThach += 5;
         this.saveAllData(data);
-        return api.sendMessage(`⚡️ ĐỘT PHÁ THẦN TỐC lên ${user.realm}! Bonus +5 Linh Thạch!`, threadID, messageID);
+        return api.sendMessage(`⚡ Bắt đầu độ kiếp đột phá cảnh giới...\n\n⚡️ ĐỘT PHÁ THẦN TỐC lên ${user.realm}! Bonus +5 Linh Thạch!`, threadID, messageID);
       }
 
       if (roll < rate) {
@@ -580,7 +579,8 @@ module.exports = class {
         ];
         const successReason = successReasons[Math.floor(Math.random() * successReasons.length)];
         
-        let msg = `🌟 Thành công đột phá lên tầng ${index + 2}/${this.realms.length} nhờ *${successReason}*!\n\n`;
+        let msg = `⚡ Bắt đầu độ kiếp đột phá cảnh giới...\n\n`;
+        msg += `🌟 Thành công đột phá lên tầng ${index + 2}/${this.realms.length} nhờ *${successReason}*!\n\n`;
         msg += `✨ Cảnh giới mới: *${next}*\n`;
         msg += `💰 Nhận được: *+2 Linh Thạch*\n`;
         msg += `💪 Thể chất: ${user.theChat}`;
@@ -594,7 +594,7 @@ module.exports = class {
         if (user.items.danphuc) {
           user.items.danphuc--;
           this.saveAllData(data);
-          return api.sendMessage("🛡️ Được bảo vệ bởi Đan Hồi Phục. Không mất EXP.", threadID, messageID);
+          return api.sendMessage(`⚡ Bắt đầu độ kiếp đột phá cảnh giới...\n\n🛡️ Được bảo vệ bởi Đan Hồi Phục. Không mất EXP.`, threadID, messageID);
         }
         
         // Generate failure reason
@@ -609,7 +609,7 @@ module.exports = class {
           user.realm = this.realms[Math.max(0, index - 1)];
           user.theChat -= 10;
           this.saveAllData(data);
-          return api.sendMessage(`💥 Tẩu hỏa nhập ma! Bị giảm cảnh giới và thể chất!`, threadID, messageID);
+          return api.sendMessage(`⚡ Bắt đầu độ kiếp đột phá cảnh giới...\n\n💥 Tẩu hỏa nhập ma! Bị giảm cảnh giới và thể chất!`, threadID, messageID);
         }
         
         user.exp -= reqExp;
